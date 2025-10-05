@@ -1,8 +1,6 @@
 - hosts: localhost
   connection: local
   gather_facts: no
-  vars:
-    ansible_python_interpreter: "/home/azureuser/ansible-azure-venv/bin/python"
+  become: false
   roles:
-    - azure_vm
-
+    - role: azure_vm
