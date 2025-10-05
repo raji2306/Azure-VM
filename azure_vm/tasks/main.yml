@@ -1,4 +1,3 @@
----
 - name: Ensure resource group exists
   azure.azcollection.azure_rm_resourcegroup:
     name: "{{ resource_group }}"
@@ -69,7 +68,7 @@
     name: "{{ public_ip_name }}"
   register: pip_facts
 
-- name: Debug public IP and connection info (careful: private key shown)
+- name: "Debug public IP and connection info (careful: private key shown)"
   ansible.builtin.debug:
     msg: |
       VM {{ vm_name }} created.
