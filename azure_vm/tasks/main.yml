@@ -1,9 +1,48 @@
-- name: Generate SSH key for the VM
+---
+- name: Ensure resource group exists
+  azure.azcollection.azure_rm_resourcegroup:
+    name: "{{ resource_group }}"
+    location: "{{ location }}"
+
+- name: Create virtual network
+  azure.azcollection.azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vnet_name }}"
+    address_prefixes: "10.0.0.0/16"
+    dns_servers: []
+    state: present
+
+- name: Create subnet
+  azure.azcollection.azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    name: "{{ subnet_name }}"
+    virtual_network: "{{ vnet_name }}"
+    address_prefix: "10.0.1.0/24"
+    state: present
+
+- name: Create public IP
+  azure.azcollection.azure_rm_publicipaddress:
+    resource_group: "{{ resource_group }}"
+    allocation_method: Static
+    name: "{{ public_ip_name }}"
+    state: present
+
+- name: Create network interface
+  azure.azcollection.azure_rm_networkinterface:
+    resource_group: "{{ resource_group }}"
+    name: "{{ network_interface }}"
+    virtual_network: "{{ vnet_name }}"
+    subnet: "{{ subnet_name }}"
+    public_ip_name: "{{ public_ip_name }}"
+    state: present
+
+- name: Generate SSH keypair
   ansible.builtin.openssh_keypair:
     path: "{{ ssh_key_path }}"
     type: rsa
     size: 2048
   register: ssh_key
+  changed_when: ssh_key.changed is defined and ssh_key.changed
 
 - name: Create Azure VM using SSH key
   azure.azcollection.azure_rm_virtualmachine:
@@ -11,23 +50,29 @@
     name: "{{ vm_name }}"
     vm_size: "{{ vm_size }}"
     location: "{{ location }}"
-    admin_username: "{{ admin_username }}"
     network_interface_names: "{{ network_interface }}"
+    admin_username: "{{ admin_username }}"
     ssh_public_keys:
       - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
         key_data: "{{ ssh_key.public_key }}"
     image:
-      offer: "{{ image.offer }}"
       publisher: "{{ image.publisher }}"
+      offer: "{{ image.offer }}"
       sku: "{{ image.sku }}"
       version: "{{ image.version }}"
     state: present
+  register: vm_create
 
-- name: Show private key to user
+- name: Show VM public IP
+  azure.azcollection.azure_rm_publicipaddress_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ public_ip_name }}"
+  register: pip_facts
+
+- name: Debug public IP and connection info (careful: private key shown)
   ansible.builtin.debug:
     msg: |
-      VM {{ vm_name }} created successfully!
-      Use the following private key to SSH into the VM:
-
-      {{ ssh_key.private_key }}
-
+      VM {{ vm_name }} created.
+      Public IP: {{ pip_facts.ansible_facts.azure_publicipaddresses[0].ip_address | default('N/A') }}
+      Private_key_location_on_controller: {{ ssh_key_path }}
+      (The task generated a private key — treat it as sensitive.)
