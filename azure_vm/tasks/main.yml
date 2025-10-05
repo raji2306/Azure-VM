@@ -1,0 +1,33 @@
+- name: Generate SSH key for the VM
+  ansible.builtin.openssh_keypair:
+    path: "{{ ssh_key_path }}"
+    type: rsa
+    size: 2048
+  register: ssh_key
+
+- name: Create Azure VM using SSH key
+  azure.azcollection.azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    vm_size: "{{ vm_size }}"
+    location: "{{ location }}"
+    admin_username: "{{ admin_username }}"
+    network_interface_names: "{{ network_interface }}"
+    ssh_public_keys:
+      - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ ssh_key.public_key }}"
+    image:
+      offer: "{{ image.offer }}"
+      publisher: "{{ image.publisher }}"
+      sku: "{{ image.sku }}"
+      version: "{{ image.version }}"
+    state: present
+
+- name: Show private key to user
+  ansible.builtin.debug:
+    msg: |
+      VM {{ vm_name }} created successfully!
+      Use the following private key to SSH into the VM:
+
+      {{ ssh_key.private_key }}
+
