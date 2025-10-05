@@ -1,20 +1,16 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# defaults file for azure_vm
-
-# roles/azure_vm/defaults/main.yml
-# SPDX-License-Identifier: MIT-0
-
+# defaults for azure_vm role
 resource_group: "Product-Z"
 location: "southindia"
 vm_name: "Mine"
 vm_size: "Standard_B1s"
 admin_username: "azureuser"
 network_interface: "Product-Z"
+vnet_name: "ProductZ"
+subnet_name: "db"
+ssh_key_path: "/tmp/{{ vm_name }}_key"
 image:
-  offer: "UbuntuServer"
   publisher: "Canonical"
+  offer: "UbuntuServer"
   sku: "18.04-LTS"
   version: "latest"
-ssh_key_path: "/tmp/{{ vm_name }}_key"   # path to generate keypair
-
