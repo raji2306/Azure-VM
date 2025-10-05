@@ -7,6 +7,7 @@ vm_size: "Standard_B1s"
 admin_username: "azureuser"
 network_interface: "Product-Z"
 vnet_name: "ProductZ"
+public_ip_name: "Mine-PublicIP"
 subnet_name: "db"
 ssh_key_path: "/tmp/{{ vm_name }}_key"
 image:
